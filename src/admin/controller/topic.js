@@ -1,6 +1,5 @@
 const Base = require('./base.js');
 const Config = require('../../common/config/config');
-const Upload = require('./upload.js');
 const FileUtil = require('../../common/fileutil');
 
 module.exports = class extends Base {
@@ -24,17 +23,15 @@ module.exports = class extends Base {
     const model = this.model('topic');
     const data = await model.where({id: id}).find();
 
-    try{
+    try {
       data.content = JSON.parse(data.content);
-      data.content.map((item, index)=>{
-          if(!item.startsWith("http")) // 处理相对路径
-          {
-            item = Config.imgUrlPrefix + item;
-            data.content[index] = item;
-          }
+      data.content.map((item, index) => {
+        if (!item.startsWith('http')) { // 处理相对路径
+          item = Config.imgUrlPrefix + item;
+          data.content[index] = item;
+        }
       });
-    }catch(e)
-    {
+    } catch (e) {
       data.content = [];
     }
 
@@ -51,9 +48,8 @@ module.exports = class extends Base {
 
     values.content = FileUtil.moveTmpImgToFinal(values.content); // 将详情图片移动到正式目录
 
-    let movedPosterImgs = FileUtil.moveTmpImgToFinal(values.scene_pic_url); // 将封面移动到正式目录
-    if(movedPosterImgs && movedPosterImgs.length>0)
-    {
+    const movedPosterImgs = FileUtil.moveTmpImgToFinal(values.scene_pic_url); // 将封面移动到正式目录
+    if (movedPosterImgs && movedPosterImgs.length > 0) {
       values.scene_pic_url = movedPosterImgs[0];
     }
 
@@ -69,7 +65,6 @@ module.exports = class extends Base {
       await model.add(values);
     }
 
-
     // 删除服务器中的详情图片文件
     FileUtil.deleteImg(values.deletedPics);
 
@@ -78,18 +73,15 @@ module.exports = class extends Base {
 
   async destoryAction() {
     const id = this.post('id');
-    let obj = await this.model('topic').where({id: id}).limit(1).find();
-    if(obj)
-    {
-
+    const obj = await this.model('topic').where({id: id}).limit(1).find();
+    if (obj) {
       // 删除封面
       FileUtil.deleteImg(obj.scene_pic_url);
 
       // 删除详情
-      try{
+      try {
         obj.content = JSON.parse(obj.content);
-      }catch(e)
-      {
+      } catch (e) {
         obj.content = [];
       }
       FileUtil.deleteImg(obj.content);

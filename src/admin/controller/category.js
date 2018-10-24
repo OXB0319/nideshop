@@ -1,5 +1,4 @@
 const Base = require('./base.js');
-const Config = require('../../common/config/config');
 const FileUtil = require('../../common/fileutil');
 
 module.exports = class extends Base {
@@ -29,36 +28,29 @@ module.exports = class extends Base {
   }
 
   async topCategoryAction() {
-    
     const model = this.model('category');
-    const data = await model.where({parent_id: 0}).order(['sort_order ASC','id ASC']).select();
+    const data = await model.where({parent_id: 0}).order(['sort_order ASC', 'id ASC']).select();
 
     return this.success(data);
   }
 
-
-  async cascaderAction()
-  {
-      const model = this.model('category');
-      //const data = await model.where({is_show: 1}).order(['sort_order ASC']).select();
-      const data = await model.order(['sort_order ASC']).select();
-      const topCategory = data.filter((item) => {
-          return item.parent_id === 0;
+  async cascaderAction() {
+    const model = this.model('category');
+    const data = await model.order(['sort_order ASC']).select();
+    const topCategory = data.filter((item) => {
+      return item.parent_id === 0;
+    });
+    topCategory.map((item) => {
+      item.level = 1;
+      item.children = [];
+      data.map((child) => {
+        if (child.parent_id === item.id) {
+          child.level = 2;
+          item.children.push(child);
+        }
       });
-      const categoryList = [];
-      topCategory.map((item) => {
-          item.level = 1;
-          //categoryList.push(item);
-          item.children = [];
-          data.map((child) => {
-              if (child.parent_id === item.id) {
-                  child.level = 2;
-                  item.children.push(child);
-                  //categoryList.push(child);
-              }
-          });
-      });
-      return this.success(topCategory);
+    });
+    return this.success(topCategory);
   }
 
   async infoAction() {
@@ -77,23 +69,19 @@ module.exports = class extends Base {
     const values = this.post();
     const id = this.post('id');
 
-
-    let movedPosterImgs = FileUtil.moveTmpImgToFinal(values.wap_banner_url); // 将封面移动到正式目录
-    if(movedPosterImgs && movedPosterImgs.length>0)
-    {
+    const movedPosterImgs = FileUtil.moveTmpImgToFinal(values.wap_banner_url); // 将封面移动到正式目录
+    if (movedPosterImgs && movedPosterImgs.length > 0) {
       values.wap_banner_url = movedPosterImgs[0];
     }
 
-    let movedPayQRCodeImgs = FileUtil.moveTmpImgToFinal(values.pay_qrcode); // 将收款码移动到正式目录
-    if(movedPayQRCodeImgs && movedPayQRCodeImgs.length>0)
-    {
+    const movedPayQRCodeImgs = FileUtil.moveTmpImgToFinal(values.pay_qrcode); // 将收款码移动到正式目录
+    if (movedPayQRCodeImgs && movedPayQRCodeImgs.length > 0) {
       values.pay_qrcode = movedPayQRCodeImgs[0];
     }
 
-    if(id==0)
-    {
+    if (id === 0) {
       values.level = 'L1';
-    }else{
+    } else {
       values.level = 'L2';
     }
 
@@ -111,7 +99,7 @@ module.exports = class extends Base {
   async destoryAction() {
     const id = this.post('id');
 
-    let obj = await this.model('category').where({id: id}).limit(1).find();
+    const obj = await this.model('category').where({id: id}).limit(1).find();
 
     // 删除封面
     FileUtil.deleteImg(obj.wap_banner_url);

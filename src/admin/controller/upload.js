@@ -1,7 +1,6 @@
 const Base = require('./base.js');
 const fs = require('fs');
 const Config = require('../../common/config/config');
-const Util = require('../../common/util');
 
 module.exports = class extends Base {
   async brandPicAction() {
@@ -11,13 +10,12 @@ module.exports = class extends Base {
     }
     const that = this;
 
-    let params = that.post(); // 透传参数
+    const params = that.post(); // 透传参数
 
     const fileRootRelateDir = Config.imgRootPath;
     const fileRelateDir = Config.imgFileTmpRelateDir;
 
     const fileDir = think.ROOT_PATH + fileRootRelateDir + fileRelateDir;
-    
     think.mkdir(fileDir);
 
     const filename = think.uuid(32) + '.jpg';
@@ -86,17 +84,13 @@ module.exports = class extends Base {
     });
   }
 
-  async deleteImgAction()
-  {
+  async deleteImgAction() {
+    // console.log('deleteImg');
+    // const params = this.post();
+    const that = this;
 
-    console.log("deleteImg");
-      const params = this.post();
-      const that = this;
-
-
-      return that.success({
-        name: 'brand_new_pic',
-      });
+    return that.success({
+      name: 'brand_new_pic'
+    });
   }
-
 };

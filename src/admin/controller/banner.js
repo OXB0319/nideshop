@@ -1,6 +1,4 @@
 const Base = require('./base.js');
-const Config = require('../../common/config/config');
-const Upload = require('./upload.js');
 const FileUtil = require('../../common/fileutil');
 
 module.exports = class extends Base {
@@ -35,9 +33,8 @@ module.exports = class extends Base {
     const values = this.post();
     const id = this.post('id');
 
-    let movedPosterImgs = FileUtil.moveTmpImgToFinal(values.image_url); // 将封面移动到正式目录
-    if(movedPosterImgs && movedPosterImgs.length>0)
-    {
+    const movedPosterImgs = FileUtil.moveTmpImgToFinal(values.image_url); // 将封面移动到正式目录
+    if (movedPosterImgs && movedPosterImgs.length > 0) {
       values.image_url = movedPosterImgs[0];
     }
 
@@ -59,10 +56,8 @@ module.exports = class extends Base {
   async destoryAction() {
     const id = this.post('id');
 
-    let obj = await this.model('ad').where({id: id}).limit(1).find();
-    if(obj)
-    {
-
+    const obj = await this.model('ad').where({id: id}).limit(1).find();
+    if (obj) {
       // 删除封面
       FileUtil.deleteImg(obj.image_url);
       this.model('ad').where({id: id}).limit(1).delete();

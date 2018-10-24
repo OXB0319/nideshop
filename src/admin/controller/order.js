@@ -22,10 +22,9 @@ module.exports = class extends Base {
     return this.success(data);
   }
 
-  async shipperInfosAction()
-  {
-      let shipperInfos = await this.model('shipper').select();
-      return this.success(shipperInfos);
+  async shipperInfosAction() {
+    const shipperInfos = await this.model('shipper').select();
+    return this.success(shipperInfos);
   }
 
   async infoAction() {
@@ -34,18 +33,16 @@ module.exports = class extends Base {
 
     const orderInfos = await model.field('nideshop_order.*,nideshop_region.name').join('nideshop_region ON nideshop_order.province = nideshop_region.id OR nideshop_order.city = nideshop_region.id OR nideshop_order.district = nideshop_region.id').where({'nideshop_order.id': id}).select();
 
-    if(think.isEmpty(orderInfos))
-    {
+    if (think.isEmpty(orderInfos)) {
       return this.fail('订单不存在');
     }
-    let orderInfo = orderInfos[0];
+    const orderInfo = orderInfos[0];
 
-    let orderStatusText = await model.getOrderStatusText(id);
+    const orderStatusText = await model.getOrderStatusText(id);
     orderInfo.orderStatusText = orderStatusText;
 
     let detailAddress = '';
-    for(let i=0;i<orderInfos.length;++i)
-    {
+    for (let i = 0; i < orderInfos.length;++i) {
       detailAddress += orderInfos[i].name;
     }
     detailAddress += orderInfo.address;
@@ -56,16 +53,13 @@ module.exports = class extends Base {
 
     const expressInfo = await this.model('order_express').where({order_id: id}).find();
     orderInfo.expressInfo = expressInfo;
-    // const data = await model.where({id: id}).find();
 
     return this.success(orderInfo);
   }
 
   async orderStatusToTextAction() {
-
-    
     const status = this.get('order_status');
-    let orderStatusText = this.model('order').orderStatusToText(parseInt(status));
+    const orderStatusText = this.model('order').orderStatusToText(parseInt(status));
     return this.success(orderStatusText);
   }
 
@@ -79,51 +73,43 @@ module.exports = class extends Base {
 
     const model = this.model('order');
 
-    if (id > 0 && values.order_status !=null) {
+    if (id > 0 && values.order_status != null) {
+      if (!think.isEmpty(values.expressInfo)) {
+        if (!think.isEmpty(values.expressInfo.shipper_id)) {
+          const shipperInfo = await this.model('shipper').where({id: values.expressInfo.shipper_id}).find();
+          if (think.isEmpty(shipperInfo)) {
+            return this.fail('快递信息错误');
+          }
 
-      if(!think.isEmpty(values.expressInfo))
-      {
-        if(!think.isEmpty(values.expressInfo.shipper_id))
-        {
-          let shipperInfo = await this.model('shipper').where({id:values.expressInfo.shipper_id}).find();
-          if(think.isEmpty(shipperInfo))
-          {
-            return this.fail("快递信息错误");
-          }  
+          const orderExpressId = await this.model('order_express').where({order_id: id}).getField('id', true);
 
-          let orderExpressId = await this.model('order_express').where({order_id:id}).getField('id', true);;
-
-          if(think.isEmpty(orderExpressId)) // 不存在该快递信息，新增
-          {
-            let newInfo = {
-              order_id : id,
-              shipper_id : shipperInfo.id,
-              shipper_name : shipperInfo.name,
-              shipper_code : shipperInfo.code, 
-              logistic_code : values.expressInfo.logistic_code,
-              add_time : parseInt(new Date().getTime() / 1000),
+          if (think.isEmpty(orderExpressId)) { // 不存在该快递信息，新增
+            const newInfo = {
+              order_id: id,
+              shipper_id: shipperInfo.id,
+              shipper_name: shipperInfo.name,
+              shipper_code: shipperInfo.code,
+              logistic_code: values.expressInfo.logistic_code,
+              add_time: parseInt(new Date().getTime() / 1000)
             };
 
             this.model('order_express').add(newInfo);
-          }
-          else // 更新
-          {
-            let newInfo = {
-              id : orderExpressId,
-              shipper_id : shipperInfo.id,
-              shipper_name : shipperInfo.name,
-              shipper_code : shipperInfo.code, 
-              logistic_code : values.expressInfo.logistic_code
+          } else { // 更新
+            const newInfo = {
+              id: orderExpressId,
+              shipper_id: shipperInfo.id,
+              shipper_name: shipperInfo.name,
+              shipper_code: shipperInfo.code,
+              logistic_code: values.expressInfo.logistic_code
             };
             this.model('order_express').update(newInfo);
           }
         }
       }
       await model.where({id: id}).update({order_status: parseInt(values.order_status)});
-    }else{
-      return this.fail("订单错误");
+    } else {
+      return this.fail('订单错误');
     }
-    
     return this.success(values);
   }
 

@@ -55,29 +55,27 @@ module.exports = class extends Base {
     const oldPassword = this.post('oldPassword');
     const newPassword = this.post('newPassword');
 
-    if(think.isEmpty(id) || think.isEmpty(oldPassword) || think.isEmpty(newPassword))
-    {
-      return this.fail("参数错误");
+    if (think.isEmpty(id) || think.isEmpty(oldPassword) || think.isEmpty(newPassword)) {
+      return this.fail('参数错误');
     }
 
     const admin = await this.model('admin').where({ id: id }).find();
 
-    if(think.isEmpty(admin))
-    {
-      return this.fail("用户不存在");
+    if (think.isEmpty(admin)) {
+      return this.fail('用户不存在');
     }
 
     if (think.md5(oldPassword + '' + admin.password_salt) !== admin.password) {
       return this.fail(400, '原密码错误');
     }
 
-    let realNewPassword = think.md5(newPassword + '' + admin.password_salt);
-    
+    const realNewPassword = think.md5(newPassword + '' + admin.password_salt);
+
     await this.model('admin').where({ id: admin.id }).update({
       password: realNewPassword
     });
 
-    return this.success("密码修改成功，请重新登录");
+    return this.success('密码修改成功，请重新登录');
   }
 
 };
